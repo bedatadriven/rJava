@@ -8,3 +8,9 @@ test.new <- function() {
     
     assertThat(size, identicalTo(0L))
 }
+
+
+test.static <- function() {
+    runtime <- .jcall("java/lang/Runtime", "Ljava/lang/Runtime;", "getRuntime")
+    
+}

@@ -11,16 +11,20 @@
  
 }
  
+importInternal <- function(internalClassName) {
+    className <- gsub(internalClassName, pattern="/", replacement=".", fixed=TRUE)
+    class <- do.call(import, list(as.name(className)))
+    class
+}
  
-.jnew <- function(internalClassName, ..., check = TRUE, silent = !check) {
+.jnew <- function(class, ..., check = TRUE, silent = !check) {
 
     if(silent) {
         stop("TODO: silent=TRUE")
     }
 
-    className <- gsub(internalClassName, pattern="/", replacement=".", fixed=TRUE)
-    class <- do.call(import, list(as.name(className)))
-    constructor <- class$new
+    classDef <- importInternal(class)
+    constructor <- classDef$new
     
     do.call(constructor, args = list(...))
 }
@@ -31,8 +35,10 @@
          simplify = FALSE, use.true.class = FALSE) {
          
     if(typeof(obj) == "character") {
-        stop("TODO: static method call")
-    
+        class <- importInternal(obj)
+        fn <- do.call("$", list(class, method))
+        fn(...)
+        
     } else if(typeof(obj) == "externalptr") {
         fn <- do.call("$", list(obj, method))        
         fn(...)
