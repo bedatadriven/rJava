@@ -6,10 +6,10 @@
 
   <groupId>org.renjin.cran</groupId>
   <artifactId>rJava</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>0.9-SNAPSHOT</version>
 
   <properties>
-    <renjin.version>0.9.0-SNAPSHOT</renjin.version>
+    <renjin.version>0.8.2194</renjin.version>
   </properties>
   <repositories>
     <repository>
