@@ -47,3 +47,13 @@ importInternal <- function(internalClassName) {
         stop(sprintf("unsupported typeof(obj) == '%s'", typeof(obj)))
     }
 }
+
+J <- function(class, method, ...) {
+
+    clazz <- importInternal(class)
+    if(missing(method)) {
+        return(clazz)
+    }
+
+    .jcall(clazz, returnSig="V", method=method, ...)
+}
