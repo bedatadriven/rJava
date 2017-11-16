@@ -103,7 +103,11 @@ public class rJava {
   public static SEXP  RgetByteArrayCont(SEXP s) { throw new UnsupportedOperationException("TODO"); }
   public static SEXP  RgetCharArrayCont(SEXP s) { throw new UnsupportedOperationException("TODO"); }
 
-  public static SEXP  RgetDoubleArrayCont(SEXP s) { throw new UnsupportedOperationException("TODO"); }
+  public static SEXP  RgetDoubleArrayCont(SEXP s) {
+    double[] array = (double[]) ((ExternalPtr) s).getInstance();
+    return new DoubleArrayVector(array);
+  }
+
   public static SEXP  RgetFloatArrayCont(SEXP s) { throw new UnsupportedOperationException("TODO"); }
 
   public static SEXP  RgetIntArrayCont(SEXP s) {
@@ -255,9 +259,11 @@ public class rJava {
     if (e==R_NilValue) {
       return R_NilValue;
     }
-    String s = Conversion.toScalarString(e, "object parameter");
-    if (s == null) {
-      return R_NilValue;
+    String s;
+    if (e instanceof ExternalPtr) {
+      s =  (String)((ExternalPtr) e).getInstance();
+    } else {
+      throw new EvalException("invalid object parameter");
     }
     return StringVector.valueOf(s);
   }
