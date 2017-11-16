@@ -5,12 +5,17 @@ import org.renjin.gcc.runtime.IntPtr;
 import org.renjin.primitives.Native;
 import org.renjin.sexp.*;
 
-import java.lang.reflect.Array;
-
 import static org.renjin.cran.rJava.Conversion.toScalarString;
 import static org.renjin.gnur.api.Rinternals.*;
 import static org.renjin.sexp.SexpType.*;
 
+/**
+ * This class provides an alternate implementation of the C methods in the rJava package.
+ *
+ * <p>These methods are invoked through .Call, .External, or .C native methods, and so must
+ * have the same signatures as their compiled counterparts would have had.</p>
+ */
+@SuppressWarnings("unused")
 public class rJava {
 
   static ClassLoader oClassLoader;
@@ -196,7 +201,6 @@ public class rJava {
   public static SEXP RpollException() { throw new UnsupportedOperationException("TODO"); }
   public static SEXP RthrowException(SEXP ex) { throw new UnsupportedOperationException("TODO"); }
 
-
   public static SEXP javaObjectCache(SEXP o, SEXP what) { throw new UnsupportedOperationException("TODO"); }
 
 
@@ -220,7 +224,7 @@ public class rJava {
 
     p=CDR(p); /* skip first parameter which is the function name */
     e=CAR(p); /* second is the class name */
-    if (!IsScalarString(e)) {
+    if (!isScalarString(e)) {
       throw new EvalException("RcreateObject: invalid class name");
     }
     clazz = ((StringVector) e).getElementAsString(0);
@@ -229,7 +233,7 @@ public class rJava {
     CallBuilder builder = new CallBuilder(maxJavaPars);
     builder.addParameters((PairList) p);
 
-  /* look for named arguments */
+    /* look for named arguments */
     for (PairList.Node node : ((PairList.Node) p).nodes()) {
       if(node.hasTag()) {
         if(node.getName().equals("silent") && isScalarLogical(node.getValue())) {
@@ -243,7 +247,7 @@ public class rJava {
     return builder.invokeConstructor(clazz, silent);
   }
 
-  public static boolean IsScalarString(SEXP e) {
+  public static boolean isScalarString(SEXP e) {
     return e instanceof StringVector && e.length() == 1;
   }
 
@@ -309,9 +313,9 @@ public class rJava {
     SEXP p = par;
     SEXP e;
     Object o = null;
-    String retsig;
-    String mnam;
-    String clnam = null;
+    String returnSignature;
+    String methodName;
+    String className = null;
     Class cls;
 
     p=CDR(p);
@@ -324,18 +328,18 @@ public class rJava {
 
     if (e instanceof ExternalPtr) {
       o = ((ExternalPtr) e).getInstance();
-    } else if (IsScalarString(e)) {
-      clnam = ((StringVector) e).getElementAsString(0);
+    } else if (isScalarString(e)) {
+      className = ((StringVector) e).getElementAsString(0);
     } else {
       throw new EvalException("RcallMethod: invalid object parameter");
     }
 
-    if (o == null && clnam == null) {
+    if (o == null && className == null) {
       throw new EvalException("RcallMethod: attempt to call a method of a NULL object.");
     }
 
-    if (clnam != null) {
-      cls = findClass(clnam, oClassLoader);
+    if (className != null) {
+      cls = findClass(className, oClassLoader);
     } else {
       cls = o.getClass();
     }
@@ -346,16 +350,16 @@ public class rJava {
     e=CAR(p);
     p=CDR(p);
 
-    retsig = toScalarString(e, "return signature parameter");
+    returnSignature = toScalarString(e, "return signature parameter");
 
     e=CAR(p); p=CDR(p);
-    mnam = toScalarString(e, "method name");
+    methodName = toScalarString(e, "method name");
 
     CallBuilder callBuilder = new CallBuilder(maxJavaPars);
     callBuilder.addParameters((PairList) p);
-    callBuilder.findMethod(cls, mnam);
+    callBuilder.findMethod(cls, methodName);
 
-    return callBuilder.invoke(o, retsig);
+    return callBuilder.invoke(o, returnSignature);
   }
 
   static Class findClass(String clnam) {
@@ -370,7 +374,6 @@ public class rJava {
     }
   }
 
-  // .C
   public static void RclearException() { throw new UnsupportedOperationException("TODO"); }
 
   public static void RuseJNICache(IntPtr flag) { throw new UnsupportedOperationException("TODO"); }

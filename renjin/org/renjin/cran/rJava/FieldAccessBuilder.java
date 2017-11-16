@@ -7,7 +7,7 @@ import java.lang.reflect.Field;
 
 import static org.renjin.cran.rJava.Conversion.toScalarString;
 import static org.renjin.cran.rJava.Defines.IS_JOBJREF;
-import static org.renjin.cran.rJava.rJava.IsScalarString;
+import static org.renjin.cran.rJava.rJava.isScalarString;
 import static org.renjin.gnur.api.Rinternals.Rf_asInteger;
 
 class FieldAccessBuilder {
@@ -31,7 +31,7 @@ class FieldAccessBuilder {
     }
     if (obj instanceof ExternalPtr) {
       instance = ((ExternalPtr) obj).getInstance();
-    } else if (IsScalarString(obj)) {
+    } else if (isScalarString(obj)) {
       clnam = ((StringVector) obj).getElementAsString(0);
     } else {
       throw new EvalException("invalid object parameter");
