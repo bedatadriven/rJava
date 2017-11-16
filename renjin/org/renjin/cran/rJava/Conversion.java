@@ -151,7 +151,11 @@ class Conversion {
 
       case 'L':
       case '[':
-        return new ExternalPtr<Object>(result);
+        if(result == null) {
+          return Null.INSTANCE;
+        } else {
+          return new ExternalPtr<Object>(result);
+        }
 
       default:
         throw new EvalException("Unsupported/invalid signature " + returnSignature);
