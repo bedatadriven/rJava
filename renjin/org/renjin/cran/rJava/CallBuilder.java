@@ -26,13 +26,15 @@ class CallBuilder {
   public void addParameters(PairList parameterList) {
 
     for (PairList.Node node : parameterList.nodes()) {
-    /* skip all named arguments */
+
+      /* skip all named arguments */
       if (node.hasTag()) {
         continue;
       }
       if (parameterIndex >= maxpars) {
         if (maxpars == maxJavaPars) {
-          throw new EvalException("Too many arguments in Java call. maxJavaPars is %d, recompile rJava with higher number if needed.", maxJavaPars);
+          throw new EvalException("Too many arguments in Java call. maxJavaPars is %d, " +
+              "recompile rJava with higher number if needed.", maxJavaPars);
         }
         break;
       }
@@ -57,14 +59,12 @@ class CallBuilder {
       } else if (e instanceof ListVector || e instanceof S4Object) {
         if (Defines.IS_JOBJREF(e)) {
           Object o = null;
-          String jc = null;
-          SEXP n = e.getNames();
-          if (!(n instanceof StringVector)) {
-            n = null;
-          }
+
           if (e instanceof ListVector && e.length() == 1) {
             throw new EvalException("Old, unsupported S3 Java object encountered.");
-          } else { /* new objects are S4 objects */
+
+          } else {
+            /* new objects are S4 objects */
             SEXP sref;
             sref = e.getAttribute(Symbol.get("jobj"));
             if (sref instanceof ExternalPtr) {
@@ -176,7 +176,6 @@ class CallBuilder {
     }
   }
 
-
   private void addDoubleParameter(DoubleVector e) {
     if(e.length() == 1) {
       Double value = e.getElementAsDouble(0);
@@ -198,7 +197,6 @@ class CallBuilder {
     }
   }
 
-
   private void addStringParameter(StringVector e) {
     if(e.length() == 1) {
       addParameter(e.getElementAsString(0));
@@ -207,14 +205,12 @@ class CallBuilder {
     }
   }
 
-
   private void addRawParameter(RawVector e) {
     addParameter(e.toByteArray(), byte[].class);
   }
 
   private void addParameter(Object value) {
     addParameter(value, value.getClass());
-
   }
 
   private void addParameter(Object value, Class<?> valueClass) {
@@ -226,6 +222,7 @@ class CallBuilder {
   void findMethod(Class cls, String methodName) {
     try {
       this.method = cls.getMethod(methodName, parameterTypes);
+      this.method.setAccessible(true);
     } catch (NoSuchMethodException e) {
       throw new EvalException(String.format("Could not find method '%s' with signature %s in class %s",
           methodName,
@@ -247,18 +244,25 @@ class CallBuilder {
 
 
   public SEXP invokeConstructor(String clazz, int silent) {
+    Class<?> classDef = findClass(clazz);
+
+    Object newObject;
+
     Constructor<?> constructor;
     try {
-      constructor = findClass(clazz).getConstructor(parameterTypes);
+      constructor = classDef.getDeclaredConstructor(parameterTypes);
+      constructor.setAccessible(true);
+
     } catch (NoSuchMethodException e) {
-      throw new EvalException("Could not find constructor matching the signature: " + Arrays.toString(parameterTypes));
+      throw new EvalException("Could not find constructor for " + clazz +
+          " matching the signature: " + Arrays.toString(parameterTypes));
     }
-    Object newObject;
     try {
       newObject = constructor.newInstance(parameters);
     } catch (Exception e) {
       throw new EvalException("Exception invoking constructor", e);
     }
+
     return new ExternalPtr<>(newObject);
   }
 }
